@@ -21,7 +21,7 @@ pywifi
 rapidocr_openvino
 soundfile
 ultralytics
-kokoro_onnx==0.45
+kokoro_onnx==0.4.5
 funasr_onnx==0.4.1
 #numpy==1.26.4
 
