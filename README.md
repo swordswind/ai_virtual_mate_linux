@@ -84,9 +84,11 @@ cd ai_virtual_mate_linux
 ```bash
 sudo apt install cmake libasound-dev portaudio19-dev libportaudio2 libportaudiocpp0 espeak
 ```
-3. 安装Python依赖：
+3. 安装Python依赖(分别执行以下命令，请忽略红字冲突提示，不影响正常使用)：
 ```bash
 pip install -r requirements.txt
+pip install kokoro_onnx==0.4.5
+pip install numpy==1.26.4
 ```
 4. 下载必备AI模型包：
 从[本链接](https://pan.baidu.com/s/1cvUyHLC9Di36gjzTUtCSfw?pwd=aivm)下载必备AI模型包 model.zip，解压后放入data/model文件夹
@@ -101,9 +103,11 @@ cd ai_virtual_mate_linux
 ```bash
 sudo apt install cmake libasound-dev portaudio19-dev libportaudio2 libportaudiocpp0 espeak
 ```
-3. 安装Python依赖：
+3. 安装Python依赖(分别执行以下命令，请忽略红字冲突提示，不影响正常使用)：
 ```bash
 pip install -r requirements.txt
+pip install kokoro_onnx==0.4.5
+pip install numpy==1.26.4
 ```
 
 ### 测试硬件接口
