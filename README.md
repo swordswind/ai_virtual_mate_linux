@@ -64,7 +64,7 @@
 
 ## 安装指南
 ### 环境要求
-- **操作系统**：Ubuntu22.04或更高版本
+- **操作系统**：Ubuntu22.04
 - **Python版本**：3.12
 - **处理器**：RK3588S(香橙派5 Pro) / BCM2712(树莓派5)系列 / Intel i5 8th / AMD R5 3000
 - **内存**：4GB RAM(最低)  8GB RAM(推荐)
@@ -123,7 +123,7 @@ pip install numpy==1.26.4
     - **更换Live2D模型**：编辑 dist/assets/live2d.js 文件开头的前四行，根据需求设置`Live2DPath`(模型路径)、`model_x`(模型横坐标)、`model_y`(模型纵坐标)、`model_scale`(模型大小)参数。
     - **更换MMD 3D模型**：编辑 dist/assets/mmd.js 文件开头的前三行，根据需求设置`mmdPath`(人物模型路径)、`mouthMorphIndex`(动嘴索引)、`blinkMorphIndex`(眨眼索引)参数。
     - **更换MMD 3D动作**：编辑 dist/assets/mmd_vmd.js 文件开头的前两行，根据需求设置`mmdPath`(人物模型路径)、`vmdPath`(人物动作路径)参数。
-3. **更换Live2D和MMD 3D资源**：
+3. **更换角色网页背景**：
     进入 dist/assets/image 文件夹，替换bg.jpg。
 
 ### 运行项目
