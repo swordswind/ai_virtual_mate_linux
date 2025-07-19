@@ -42,7 +42,7 @@ def play_live2d(path):  # 播放Live2D对口型
 
 
 def play_voice(path):  # 播放语音
-    pg.init()
+    pg.mixer.init()
     pg.mixer.music.load(path)
     pg.mixer.music.play()
     Thread(target=play_live2d, args=(path,)).start()
@@ -59,8 +59,11 @@ def play_tts(text):  # 语音合成
 
     text = text.split("</think>")[-1].strip()
     if prefer_tts == "edge-tts":
-        asyncio.run(ms_edge_tts())
-        play_voice(voice_path)
+        try:
+            asyncio.run(ms_edge_tts())
+            play_voice(voice_path)
+        except:
+            print(f"edge-tts服务拥挤")
     elif prefer_tts == "GPT-SoVITS":
         url = f'{gsv_api}/?text={text}&text_language=zh'
         try:

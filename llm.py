@@ -56,6 +56,9 @@ def chat_llm(msg):  # 与大语言模型对话
     elif prefer_llm == "Dify":
         res = chat_dify(msg)
         return res
+    elif prefer_llm == "RKLLM":
+        res = chat_rkllm(msg)
+        return res
     else:
         return "对话语言模型选择错误，请检查配置"
 
@@ -67,11 +70,19 @@ def chat_preprocess(msg):  # 对话预处理
             msg = f"[当前时间:{current_time()}]{msg}"
         if "哈喽" in msg:
             res = f"{username}，我是{mate_name}，很高兴遇见你"
-        elif "唱一" in msg or "唱首" in msg or "唱歌" in msg or "放歌" in msg or "放一" in msg or "放首" in msg or "你唱" in msg:
-            play_music(msg)
+            """
+        elif "寻找手机" in msg:
+            find_phone()
             return
-        elif (
-                "画面" in msg or "图像" in msg or "看到" in msg or "看见" in msg or "照片" in msg or "摄像头" in msg or "图片" in msg) and prefer_vlm != "OFF":
+        elif "寻找蓝牙耳机" in msg:
+            find_earphone()
+            return
+            """
+        elif "唱一" in msg or "唱首" in msg or "唱歌" in msg or "放歌" in msg or "放一" in msg or "放首" in msg or "你唱" in msg or "跳舞" in msg:
+            play_music_or_dance(msg)
+            return
+        elif ("画面" in msg or "图像" in msg or "看到" in msg or "看见" in msg or "照片" in msg or "摄像头" in msg or "图片" in msg) and prefer_vlm != "OFF":
+            msg = f"{prompt}。你需要根据画面内容和我聊天。我的问题是：{msg}"
             if prefer_vlm == "ZhipuAI":
                 res = glm_4v_cam(msg)
             elif prefer_vlm == "OpenAI":
@@ -114,10 +125,53 @@ def chat_preprocess(msg):  # 对话预处理
             res = recog_face()
         elif "切换" in msg and "语音" in msg:
             res = switch_asr_mode()
+        elif "切换" in msg and "主动" in msg:
+            res = switch_ase_mode()
         elif "设置" in msg or "配置" in msg or "模式" in msg:
             with open("data/db/current_asr.txt", "r", encoding="utf-8") as f:
                 current_asr = f.read()
-            res = f"语音识别模式为{current_asr}，对话语言模型为{prefer_llm}，语音合成引擎为{prefer_tts}，图像识别引擎为{prefer_vlm}"
+            with open("data/db/current_ase.txt", "r", encoding="utf-8") as f:
+                current_ase = f.read()
+            res = f"语音识别模式为{current_asr}，对话语言模型为{prefer_llm}，语音合成引擎为{prefer_tts}，图像识别引擎为{prefer_vlm}，主动感知对话为{current_ase}"
+        elif ("向左" in msg or "往左" in msg or "左转" in msg) and embody_ai_switch == "ON":
+            turn_left(rotate_gear)
+            return
+        elif ("向右" in msg or "往右" in msg or "右转" in msg) and embody_ai_switch == "ON":
+            turn_right(rotate_gear)
+            return
+        elif ("向前" in msg or "往前" in msg or "前进" in msg) and embody_ai_switch == "ON":
+            up_robot(move_gear)
+            return
+        elif ("向后" in msg or "往前" in msg or "后退" in msg) and embody_ai_switch == "ON":
+            down_robot(move_gear)
+            return
+        elif ("停止" in msg or "停下" in msg or "别动" in msg or "不要动" in msg) and embody_ai_switch == "ON":
+            res = "我已停下"
+            emergency_stop()
+        elif ("避障" in msg or "躲避障碍" in msg) and embody_ai_switch == "ON":
+            res = "我开始自动避障啦"
+            Thread(target=auto_avoid).start()
+        elif ("自由活动" in msg or "自主行动" in msg) and embody_ai_switch == "ON":
+            res = "我开始自由活动啦"
+            Thread(target=free_activity).start()
+        elif ("找寻" in msg or "寻找" in msg or "监测" in msg or "检测" in msg) and embody_ai_switch == "ON":
+            keyword_actions = {"书": "书本", "手机": "手机", "杯": "杯子", "剪刀": "剪刀", "苹果": "苹果",
+                               "蕉": "香蕉", "橙": "橙子"}
+            res = "这个我不会寻找哦"
+            for keyword, obj in keyword_actions.items():
+                if keyword in msg:
+                    Thread(target=auto_find_yolo, args=(obj,)).start()
+                    res = f"我开始自动寻找{obj}啦"
+                    break
+        elif ("跟着" in msg or "跟随" in msg or "紧跟" in msg) and embody_ai_switch == "ON":
+            res = "我会一直跟随你啦"
+            Thread(target=auto_follow).start()
+        elif ("打开手势" in msg or "开启手势" in msg) and embody_ai_switch == "ON":
+            Thread(target=run_gesture).start()
+            res = "手势操控打开啦"
+        elif ("关闭手势" in msg or "退出手势" in msg) and embody_ai_switch == "ON":
+            close_gesture()
+            res = "手势操控已关闭"
         elif "确认删除记忆" in msg or "确定删除记忆" in msg:
             res = clear_chat()
         elif "确定退出" in msg or "确认退出" in msg:
@@ -154,6 +208,12 @@ def chat_anything_llm(msg):  # AnythingLLM知识库
     data = {"message": msg}
     res = rq.post(url, json=data, headers=headers)
     return res.json().get("textResponse")
+
+
+def chat_rkllm(msg):  # RKLLM
+    res = rq.get(f"{rkllm_url}/rkllm?msg={msg}")
+    res = res.json()['answer'].strip()
+    return res
 
 
 def clear_chat():  # 删除记忆

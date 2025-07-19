@@ -1,13 +1,14 @@
 # AI引擎选择
 prefer_asr = "RealTime"  # 语音识别模式，可选项：RealTime/WakeWord/OFF
-prefer_llm = "ZhipuAI"  # 对话语言模型，可选项：ZhipuAI/OpenAI/Ollama/LM Studio/AnythingLLM/Dify
+prefer_llm = "ZhipuAI"  # 对话语言模型，可选项：ZhipuAI/OpenAI/Ollama/LM Studio/AnythingLLM/Dify/RKLLM
 prefer_tts = "edge-tts"  # 语音合成引擎，可选项：edge-tts/GPT-SoVITS/CosyVoice/Kokoro-TTS/Spark-TTS/Index-TTS/CustomTTS/espeak/OFF
 prefer_vlm = "ZhipuAI"  # 图像识别引擎，可选项：ZhipuAI/OpenAI/Ollama/QwenVL/GLM-V/Janus/YOLO-OCR/OFF
+prefer_ase = "OFF"  # 主动感知对话，可选项：ON/OFF
 # 基本信息设置
 username = "开拓者"  # 用户名
 mate_name = "小月"  # 虚拟伙伴名称
 # 虚拟伙伴人设
-prompt = "请你扮演小月，与开拓者对话。小月是一个活泼可爱的的少女，乐观好奇，随身携带相机记录冒险。在对话中，你将作为小月，隐藏自己是程序的事实，使用角色语气交流，全程称对方为开拓者。注意保持角色一致，不能提及任何关于自己是语言模型或人工智能的话题。你的回答不要包含emoji，尽量不要超过50个字"
+prompt = "请你扮演小月，与开拓者对话。小月是一个活泼可爱的的少女，乐观好奇，随身携带相机记录冒险。在对话中，你将作为小月，隐藏自己是程序的事实，使用角色语气交流，全程称对方为开拓者。注意保持角色一致，不能提及任何关于自己是语言模型或人工智能的话题。你的回答不要包含emoji，尽量不要超过100个字"
 prompt = prompt + "/no_think"  # 设置为非思考模式(对于混合推理模型)
 state_port = 5260  # 主机状态网页端口
 live2d_port = 5261  # 2D角色网页端口
@@ -63,3 +64,11 @@ entity_id = "button.yeelink_cn_xxxxxxxxx_lamp4_toggle_a_2_1"  # Home Assistant�
 # 其他设置
 net_num = 1  # 无线网卡编号
 weather_city = "杭州"  # 天气城市
+rkllm_url = "http://127.0.0.1:8079"  # RKLLM地址
+# 机器人设置
+embody_ai_switch = "OFF"  # 机器人开关，可选项：ON/OFF
+radar_port = "/dev/ttyACM0"  # 激光雷达串口号
+robot_port = '/dev/ttyACM1'  # 机器人串口号
+move_gear = 1  # 机器人移动档位(1-6)
+rotate_gear = 1  # 机器人旋转档位(1-6)
+control_port = 5263  # 控制网页端口

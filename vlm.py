@@ -1,8 +1,6 @@
-from base64 import b64encode
 from ollama import Client
 from rapidocr_openvino import RapidOCR
-from ultralytics import YOLO
-from function import *
+from gesture import *
 
 cls_model, det_model, ocr = None, None, None
 
@@ -92,11 +90,6 @@ def openai_vlm_cam(question):
     return completion.choices[0].message.content
 
 
-def encode_image(image):  # 图片转base64
-    _, buffer = cv2.imencode('.png', image)
-    return b64encode(buffer).decode('utf-8')
-
-
 def yolo_ocr_cam(question):  # 本地YOLO-OCR-LLM摄像头画面识别理解
     global cls_model, det_model, ocr
     if cls_model is None or det_model is None or ocr is None:
@@ -142,7 +135,9 @@ def yolo_ocr_cam(question):  # 本地YOLO-OCR-LLM摄像头画面识别理解
         text_detection_result = "文字检测结果:" + text_detection_result
     yolo_ocr_result = f"场景检测结果(场景名称,置信度):{scene_detection_result}\n物体检测结果(物体名称,数量):{object_detection_result}\n{text_detection_result}"
     ollama_client = Client(host=ollama_url)
-    messages = [{"role": "system", "content": "你是一个专业的多模态大模型，请扮演一个有情感的人类和我对话，需要结合你看到的内容回答我的问题，仅需输出推测的场景行为。/no_think"},
-                {"role": "user", "content": f"\n{yolo_ocr_result}以上是你看到的内容，不要提及任何英文、置信度，不能拒绝回答我的问题。我的问题是:{question}"}]
+    messages = [{"role": "system",
+                 "content": "你是一个专业的多模态大模型，请扮演一个有情感的人类和我对话，需要结合你看到的内容回答我的问题，仅需输出推测的场景行为。/no_think"},
+                {"role": "user",
+                 "content": f"\n{yolo_ocr_result}以上是你看到的内容，不要提及任何英文、置信度，不能拒绝回答我的问题。我的问题是:{question}"}]
     response = ollama_client.chat(model=ollama_llm_model, messages=messages)
     return response['message']['content']

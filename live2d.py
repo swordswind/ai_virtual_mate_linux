@@ -28,6 +28,8 @@ def index():  # Live2D页面
 
 @app.route('/assets/<path:path>')
 def serve_static(path):  # 静态资源
+    if path.endswith(".js"):
+        return send_from_directory('./dist/assets', path, mimetype='application/javascript')
     return send_from_directory('./dist/assets', path)
 
 

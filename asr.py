@@ -1,9 +1,12 @@
+import warnings
 import wave
 import pyaudio
 import numpy as np
 from funasr_onnx import SenseVoiceSmall
 from config import speech_end_wait_time, mic_num
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=RuntimeWarning)
 FORMAT = pyaudio.paInt16
 CHANNELS, RATE, CHUNK = 1, 16000, 1024
 SILENCE_DURATION = speech_end_wait_time  # 静音持续时间，单位秒
@@ -16,7 +19,8 @@ try:
 except Exception as e:
     print(f"麦克风配置错误，错误详情：{e}")
 cache_path = "data/cache/cache_record.wav"
-model = SenseVoiceSmall("data/model/ASR/sensevoice-small-onnx-quant", batch_size=10, quantize=True)
+asr_model_path = "data/model/ASR/sensevoice-small-onnx-quant"
+model = SenseVoiceSmall(asr_model_path, batch_size=10, quantize=True)
 
 
 def rms(data):  # 计算音频数据的均方根
@@ -24,7 +28,7 @@ def rms(data):  # 计算音频数据的均方根
 
 
 def dbfs(rms_value):  # 将均方根转换为分贝满量程（dBFS）
-    return 20 * np.log10(rms_value / (2 ** 15))  # 假设是16位音频
+    return 20 * np.log10(rms_value / (2 ** 15))  # 16位音频
 
 
 def record_audio():  # 录音
@@ -56,7 +60,7 @@ def recognize_audio(audiodata):  # 保存录音到临时文件
         duration = n_frames / RATE
     if duration < SILENCE_DURATION + 0.5:
         return ""
-    res = model(cache_path, language="auto", use_itn=False)
+    res = model(cache_path, language="auto", use_itn=True)
     # 提取语种、情感、事件和文本结果
     info = res[0].split('<|')[1:]  # 分割文本信息
     emotion = info[1].split('|>')[0]  # 情感

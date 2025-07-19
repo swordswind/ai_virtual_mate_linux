@@ -1,4 +1,4 @@
-﻿# Created by Charles on 2018/10/10, Modified by SwordsWind on 2025/05/15
+﻿# Created by Charles on 2018/10/10, Modified by SwordsWind on 2025/05/16
 import requests as rq
 from bs4 import BeautifulSoup
 

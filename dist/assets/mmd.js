@@ -1,6 +1,6 @@
 const mmdPath = 'assets/mmd_model/小月(仅作示例,无法显示)/小月.pmx'; // 人物模型路径
-const mouthMorphIndex = 30; // 嘴的 morph target 索引
-const blinkMorphIndex = 6; // 眨眼的 morph target 索引
+const mouthMorphIndex = 32; // 嘴的 morph target 索引
+const blinkMorphIndex = 9; // 眨眼的 morph target 索引
 
 let camera, scene, renderer, controls, model, helper;
 let mouthOpen = false;

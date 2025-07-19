@@ -1,14 +1,16 @@
-import random
 import re
 import socket
 import cv2
 import psutil
 import pywifi
 import face_recognition as fr
+import mediapipe as mp
 from base64 import b64decode
-from websearch import search
-from ping3 import ping
+from xml.etree import ElementTree
 from homeassistant_api import Client as hClient
+from ping3 import ping
+from ultralytics import YOLO
+from websearch import search
 from tts import *
 
 wifi = pywifi.PyWiFi()
@@ -16,25 +18,51 @@ try:
     iface = wifi.interfaces()[net_num]
 except:
     print("未连接无线网卡或网卡编号设置错误，可前往config.py修改net_num")
+pose, yolo_model = None, None
+
+
+def function_llm(fc_prompt, msg):  # 函数大语言模型
+    client = OpenAI(base_url=glm_url, api_key=glm_key)
+    completion = client.chat.completions.create(
+        model=glm_llm_model, messages=[{"role": "user", "content": msg}, {"role": "system", "content": fc_prompt}])
+    return completion.choices[0].message.content
 
 
 def get_news(msg):  # 新闻查询
-    url = 'https://weibo.com/ajax/side/hotSearch'
-    try:
-        response = rq.get(url)
+    def get_news_from_wb():
+        response = rq.get('https://weibo.com/ajax/side/hotSearch')
         result = response.json()['data']
         hot_names = []
         for item in result.get('realtime', []):
             hot_names.append(item.get('word', ''))
-        res = '\n'.join(hot_names)
-        client = OpenAI(base_url=glm_url, api_key=glm_key)
-        completion = client.chat.completions.create(model=glm_llm_model, messages=[{"role": "user",
-                                                                                    "content": f"{res}。上面是完整的新闻热搜，请你根据这些热搜，分析并发表你的观点见解并回答我的问题，我的问题是：{msg}？回答不要超过200个字"},
-                                                                                   {"role": "system",
-                                                                                    "content": "请你扮演一名专业的新闻评论员和我对话，完整阅读我给你的新闻热搜，并简要地回答我的问题。"}])
-        return completion.choices[0].message.content
+        return '\n'.join(hot_names)
+
+    def get_news_from_zxw(news_url):
+        res = rq.get(news_url)
+        xml_content = res.content.decode("utf-8")
+        root1 = ElementTree.fromstring(xml_content)
+        titles = []
+        for item in root1.findall(".//item"):
+            title_elem = item.find("title")
+            if title_elem is not None and title_elem.text:
+                titles.append(title_elem.text.strip())
+        result = "\n".join(titles)
+        return result
+
+    try:
+        if "微博" in msg:
+            news_result = get_news_from_wb()
+        elif "世界" in msg or "国际" in msg:
+            news_result = get_news_from_zxw("https://www.chinanews.com.cn/rss/world.xml")
+        elif "财经" in msg or "经济" in msg:
+            news_result = get_news_from_zxw("https://www.chinanews.com.cn/rss/finance.xml")
+        else:
+            news_result = get_news_from_zxw("https://www.chinanews.com.cn/rss/society.xml")
+        answer = function_llm(f"{prompt}。请你根据新闻信息和我对话",
+            f"{news_result}。上面是完整的新闻热搜，请你根据这些热搜，分析并发表你的观点见解并回答我的问题，我的问题是：{msg}？回答不要超过100个字")
+        return answer
     except:
-        return "新闻查询服务异常"
+        return "新闻服务维护中，请一段时间后再试"
 
 
 def get_weather():  # 天气查询
@@ -44,9 +72,9 @@ def get_weather():  # 天气查询
     api = f"https://api.{get_weather_domain()}.cn/API/weather/?city={weather_city}"
     try:
         res = rq.get(api).json()
-        return f"{weather_city}天气{res['data']['weather']}，现在{res['data']['current']['weather']}，气温{res['data']['current']['temp']}度，湿度{res['data']['current']['humidity']}，空气质量指数{res['data']['current']['air']}，{res['data']['current']['wind']}{res['data']['current']['windSpeed']}"
+        return f"{weather_city}{res['data']['weather']}，现在{res['data']['current']['weather']}，气温{res['data']['current']['temp']}度，湿度{res['data']['current']['humidity']}，空气质量指数{res['data']['current']['air']}，{res['data']['current']['wind']}{res['data']['current']['windSpeed']}"
     except:
-        return "天气查询服务异常"
+        return "气象第三方服务异常，请检查城市名或一段时间后试"
 
 
 def get_wifi_info():  # WiFi强度查询
@@ -107,39 +135,12 @@ def ol_search(msg):  # 联网搜索
         results = search(msg, num_results=5)
         search_result = results[0].get('abstract') + results[1].get('abstract') + results[2].get('abstract') + results[
             3].get('abstract') + results[4].get('abstract')
-        client = OpenAI(base_url=glm_url, api_key=glm_key)
-        completion = client.chat.completions.create(model=glm_llm_model, messages=[{"role": "user",
-                                                                                    "content": f"{search_result}。上面是完整的搜索结果，请你根据这些搜索结果，分析并回答我的问题，我的问题是：{msg}？"},
-                                                                                   {"role": "system",
-                                                                                    "content": "你是一个专业的搜索总结助手，我输入我的问题和杂乱的内容，你输出整理好的内容为详细的一段话，不要分段"}])
-        return completion.choices[0].message.content
+        answer = function_llm(
+            "你是一个专业的搜索总结助手，我输入我的问题和杂乱的内容，你输出整理好的内容为详细的一段话，不要分段",
+            f"{search_result}。上面是完整的搜索结果，请你根据这些搜索结果，分析并回答我的问题，我的问题是：{msg}？")
+        return answer
     except:
-        return "联网搜索服务异常"
-
-
-def play_music(song_name):  # 音乐播放
-    music_folder = "data/music"
-    try:
-        mp3_files = [f for f in os.listdir(music_folder) if f.endswith('.mp3')]
-        for character in song_name:
-            matched_songs = [song for song in mp3_files if character in song]
-            if matched_songs:
-                selected_song = random.choice(matched_songs)
-                song_name = selected_song.replace(".mp3", "").replace("data/music\\", "")
-                break
-        else:
-            selected_song = random.choice(mp3_files)
-            song_name = selected_song.replace(".mp3", "").replace("data/music\\", "")
-        play_tts(f"请欣赏我唱{song_name}")
-        audio_path = os.path.join(music_folder, selected_song)
-        pg.init()
-        pg.mixer.music.load(audio_path)
-        pg.mixer.music.set_volume(0.25)
-        pg.mixer.music.play()
-        while pg.mixer.music.get_busy():
-            pg.time.Clock().tick(1)
-    except Exception as e:
-        print(f"音乐播放服务出错，错误详情：{e}")
+        return "联网搜索服务维护中，请一段时间后再试"
 
 
 def control_ha():  # Home Assistant控制
@@ -212,6 +213,36 @@ def recog_face():  # 人脸识别
         return f"人脸识别服务异常，错误详情：{e}"
 
 
+def check_person(cap):  # 人物检测
+    global pose
+    if pose is None:
+        pose = mp.solutions.pose.Pose()
+    ret, frame = cap.read()
+    image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    results = pose.process(image)
+    if results.pose_landmarks:
+        return "有人"
+    return "无人"
+
+
+def check_yolo(obj, cap):  # 物体检测
+    global yolo_model
+    if yolo_model is None:
+        yolo_model = YOLO('data/model/YOLO/yolo11n.pt')
+    obj_dict = {"书本": "book", "手机": "cell phone", "杯子": "cup", "剪刀": "scissors", "苹果": "apple",
+                "橙子": "orange", "香蕉": "banana"}
+    obj = obj_dict.get(obj, obj)
+    ret, frame = cap.read()
+    results = yolo_model(frame)
+    for result in results:
+        for box in result.boxes:
+            class_id = int(box.cls)
+            class_name = yolo_model.names[class_id]  # 获取类别名称
+            if class_name == obj:
+                return True
+    return False
+
+
 def exit_app():  # 退出程序
     res = f"{mate_name}即将退出，再见"
     print(f"{mate_name}：{res}")
@@ -239,7 +270,7 @@ def shutdown():  # 关机
         print("关机失败，该操作需要root权限")
 
 
-def switch_asr_mode():
+def switch_asr_mode():  # 切换语音模式
     with open("data/db/current_asr.txt", "r", encoding="utf-8") as f:
         current_asr = f.read()
     if current_asr == "RealTime":
@@ -252,5 +283,20 @@ def switch_asr_mode():
         return "已切换为实时语音模式"
 
 
+def switch_ase_mode():  # 切换主动对话模式
+    with open("data/db/current_ase.txt", "r", encoding="utf-8") as f:
+        current_ase = f.read()
+    if current_ase == "ON":
+        with open("data/db/current_ase.txt", "w", encoding="utf-8") as f:
+            f.write("OFF")
+        return "已关闭主动感知对话"
+    elif current_ase == "OFF":
+        with open("data/db/current_ase.txt", "w", encoding="utf-8") as f:
+            f.write("ON")
+        return "已开启主动感知对话"
+
+
 with open("data/db/current_asr.txt", "w", encoding="utf-8") as file:
     file.write(prefer_asr)
+with open("data/db/current_ase.txt", "w", encoding="utf-8") as file:
+    file.write(prefer_ase)
