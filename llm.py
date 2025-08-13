@@ -70,14 +70,6 @@ def chat_preprocess(msg):  # 对话预处理
             msg = f"[当前时间:{current_time()}]{msg}"
         if "哈喽" in msg:
             res = f"{username}，我是{mate_name}，很高兴遇见你"
-            """
-        elif "寻找手机" in msg:
-            find_phone()
-            return
-        elif "寻找蓝牙耳机" in msg:
-            find_earphone()
-            return
-            """
         elif "唱一" in msg or "唱首" in msg or "唱歌" in msg or "放歌" in msg or "放一" in msg or "放首" in msg or "你唱" in msg or "跳舞" in msg:
             play_music_or_dance(msg)
             return
@@ -222,3 +214,4 @@ def clear_chat():  # 删除记忆
     with open('data/db/memory.db', 'w', encoding='utf-8') as f:
         f.write("")
     return "记忆已清空"
+
